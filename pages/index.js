@@ -1,5 +1,6 @@
 import Head from "next/head";
 import styles from "../styles/Home.module.css";
+import InventoryTable from "components/InventoryTable";
 
 export default function Home() {
 	return (
@@ -21,6 +22,7 @@ export default function Home() {
 					<button>Add Item (Item, city)</button>
 				</div>
 				<div>Table, columns are name, city, weather</div>
+				<InventoryTable />
 			</main>
 		</div>
 	);
