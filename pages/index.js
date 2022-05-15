@@ -18,8 +18,12 @@ export default function Home() {
 		getData();
 	}, []);
 
-	const addToTable = () => {
-		console.log(inventoryRows, inventoryRows.length);
+	const addToTable = async () => {
+		const resp = await axios.post("/api/items", {
+			item,
+			city,
+		});
+		setInventoryRows(resp.data.items);
 	};
 
 	return (
@@ -57,7 +61,10 @@ export default function Home() {
 						Add to Table
 					</Button>
 				</div>
-				<InventoryTable rows={inventoryRows} />
+				<InventoryTable
+					rows={inventoryRows}
+					setRows={setInventoryRows}
+				/>
 			</main>
 		</div>
 	);
