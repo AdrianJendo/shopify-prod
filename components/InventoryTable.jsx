@@ -20,7 +20,7 @@ import styles from "../styles/Home.module.css";
 
 const rowsPerPage = 50;
 
-export default function InventoryTable() {
+export default function InventoryTable({ rows }) {
 	const [page, setPage] = React.useState(0);
 	const [edit, setEdit] = React.useState(false);
 
@@ -74,33 +74,6 @@ export default function InventoryTable() {
 		</Tooltip>
 	);
 
-	const rows = [
-		{
-			id: 1,
-			item: "pants",
-			city: "Vancouver",
-			weather: "rainy",
-		},
-		{
-			id: 2,
-			item: "pants",
-			city: "Vancouver",
-			weather: "rainy",
-		},
-		{
-			id: 3,
-			item: "pants",
-			city: "Vancouver",
-			weather: "rainy",
-		},
-		{
-			id: 4,
-			item: "pants",
-			city: "Vancouver",
-			weather: "rainy",
-		},
-	];
-
 	if (edit) {
 		for (let i = 0; i < rows.length; ++i) {
 			rows[i].cancel = (
@@ -108,7 +81,6 @@ export default function InventoryTable() {
 					onClick={() => {
 						console.log("click");
 					}}
-					key={i}
 					style={{
 						padding: "0px 8px",
 					}}
@@ -160,7 +132,7 @@ export default function InventoryTable() {
 										hover
 										role="checkbox"
 										tabIndex={-1}
-										key={row.name}
+										key={row.id}
 										sx={{
 											height: "70px",
 										}}

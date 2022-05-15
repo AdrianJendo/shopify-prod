@@ -1,9 +1,27 @@
+import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import styles from "styles/Home.module.css";
 import InventoryTable from "components/InventoryTable";
 import { TextField, Button } from "@mui/material";
+import axios from "axios";
 
 export default function Home() {
+	const [item, setItem] = useState("");
+	const [city, setCity] = useState("");
+	const [inventoryRows, setInventoryRows] = useState([]);
+
+	useEffect(() => {
+		const getData = async () => {
+			const resp = await axios.get("/api/items");
+			setInventoryRows(resp.data.items);
+		};
+		getData();
+	}, []);
+
+	const addToTable = () => {
+		console.log(inventoryRows, inventoryRows.length);
+	};
+
 	return (
 		<div className={styles.container}>
 			<Head>
@@ -23,16 +41,23 @@ export default function Home() {
 						id="item"
 						label="Item"
 						variant="standard"
+						value={item}
+						onChange={(e) => setItem(e.target.value)}
 					/>
 					<TextField
 						className={styles.textField}
 						id="city"
 						label="City"
 						variant="standard"
+						value={city}
+						onChange={(e) => setCity(e.target.value)}
 					/>
-					<Button variant="outlined"> Add to Table</Button>
+					<Button variant="outlined" onClick={() => addToTable()}>
+						{" "}
+						Add to Table
+					</Button>
 				</div>
-				<InventoryTable />
+				<InventoryTable rows={inventoryRows} />
 			</main>
 		</div>
 	);
