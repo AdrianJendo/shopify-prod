@@ -10,10 +10,13 @@ import {
 	TableHead,
 	TablePagination,
 	TableRow,
+	TextField,
+	Typography,
 } from "@mui/material";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
+import styles from "../styles/Home.module.css";
 
 const rowsPerPage = 50;
 
@@ -73,21 +76,25 @@ export default function InventoryTable() {
 
 	const rows = [
 		{
+			id: 1,
 			item: "pants",
 			city: "Vancouver",
 			weather: "rainy",
 		},
 		{
+			id: 2,
 			item: "pants",
 			city: "Vancouver",
 			weather: "rainy",
 		},
 		{
+			id: 3,
 			item: "pants",
 			city: "Vancouver",
 			weather: "rainy",
 		},
 		{
+			id: 4,
 			item: "pants",
 			city: "Vancouver",
 			weather: "rainy",
@@ -114,6 +121,10 @@ export default function InventoryTable() {
 
 	const handleChangePage = (_, newPage) => {
 		setPage(newPage);
+	};
+
+	const updateName = (data) => {
+		console.log(data);
 	};
 
 	return (
@@ -151,7 +162,7 @@ export default function InventoryTable() {
 										tabIndex={-1}
 										key={row.name}
 										sx={{
-											height: "60px",
+											height: "70px",
 										}}
 									>
 										{columns.map((column) => {
@@ -160,11 +171,32 @@ export default function InventoryTable() {
 												<TableCell
 													key={column.id}
 													align={column.align}
+													className={styles.tableCell}
 												>
-													{column.format &&
-													typeof value === "number"
-														? column.format(value)
-														: value}
+													{edit &&
+													column.id !== "weather" &&
+													column.id !== "cancel" ? (
+														<TextField
+															className={
+																styles.tableTextField
+															}
+															value={value}
+															variant="standard"
+															onChange={(e) =>
+																updateName({
+																	newVal: e
+																		.target
+																		.value,
+																	id: column.id,
+																	value,
+																})
+															}
+														></TextField>
+													) : (
+														<Typography>
+															{value}
+														</Typography>
+													)}
 												</TableCell>
 											);
 										})}

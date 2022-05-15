@@ -1,6 +1,7 @@
 import Head from "next/head";
-import styles from "../styles/Home.module.css";
+import styles from "styles/Home.module.css";
 import InventoryTable from "components/InventoryTable";
+import { TextField, Button } from "@mui/material";
 
 export default function Home() {
 	return (
@@ -16,12 +17,21 @@ export default function Home() {
 
 			<main className={styles.main}>
 				<h1 className={styles.title}>Inventory Tracker</h1>
-				<div style={{ display: "inline-block" }}>
-					<input type="text"></input>
-					<input type="text"></input>
-					<button>Add Item (Item, city)</button>
+				<div className={styles.textContainer}>
+					<TextField
+						className={styles.textField}
+						id="item"
+						label="Item"
+						variant="standard"
+					/>
+					<TextField
+						className={styles.textField}
+						id="city"
+						label="City"
+						variant="standard"
+					/>
+					<Button variant="outlined"> Add to Table</Button>
 				</div>
-				<div>Table, columns are name, city, weather</div>
 				<InventoryTable />
 			</main>
 		</div>

@@ -98,3 +98,23 @@
 		flex-direction: column;
 	}
 }
+
+.textContainer {
+	display: inline-block;
+	padding: 45px;
+}
+
+.textField {
+	margin: 0 20px;
+	width: 200px;
+}
+
+.tableCell {
+	width: 120px;
+	height: 60px;
+	padding: none;
+}
+
+.tableTextField {
+	width: 100px;
+}
