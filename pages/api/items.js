@@ -1,5 +1,8 @@
 import sqlite3 from "sqlite3";
 import { DB_NAME, TABLE_NAME } from "constants.js";
+import axios from "axios";
+
+const API_KEY = process.env.API_KEY;
 
 // Helper function for creating db
 const createDatabase = () => {
@@ -29,21 +32,64 @@ const createDatabase = () => {
 const queryInventories = async (res) => {
 	let rows;
 	let err = undefined;
-	await new Promise((resolve) => {
-		db.all(`SELECT * FROM ${TABLE_NAME};`, function (queryErr, queryRows) {
-			if (queryErr) {
-				err = queryErr;
-			} else {
-				rows = queryRows;
+	const weatherData = {};
+	await new Promise(async (resolve) => {
+		// get the unique cities
+		db.all(
+			`SELECT DISTINCT city FROM ${TABLE_NAME};`,
+			async (queryErr, cityRows) => {
+				if (queryErr) {
+					err = queryErr;
+				} else {
+					const cities = cityRows.map((row) => row.city);
+
+					console.log("C", cities);
+
+					const cityWeatherPromises = cityRows.map((row) =>
+						axios.get(
+							"https://api.openweathermap.org/data/2.5/weather",
+							{
+								params: {
+									q: `${row.city},ca`,
+									appid: API_KEY,
+								},
+							}
+						)
+					);
+
+					const cityWeatherResp = await Promise.all(
+						cityWeatherPromises
+					);
+
+					cityWeatherResp.forEach((resp) => {
+						weatherData[resp.data.name] =
+							resp.data.weather[0].description;
+					});
+
+					db.all(
+						`SELECT * FROM ${TABLE_NAME};`,
+						function (queryErr, queryRows) {
+							if (queryErr) {
+								err = queryErr;
+							} else {
+								rows = queryRows;
+							}
+							resolve();
+						}
+					);
+				}
 			}
-			resolve();
-		});
+		);
 	});
+
 	if (err) {
 		res.status(500).json({
-			msg: "Error get inventory data",
+			msg: "Error querying inventory data",
 		});
 	} else {
+		for (let i = 0; i < rows.length; i++) {
+			rows[i].weather = weatherData[rows[i].city];
+		}
 		res.status(200).json({ items: rows });
 	}
 };
@@ -79,7 +125,6 @@ export default async function handler(req, res) {
 							msg: "Error querying database",
 						});
 					} else {
-						console.log(queryRows, stock);
 						const query = queryRows.length
 							? `UPDATE ${TABLE_NAME}
 						SET stock = ${queryRows[0].stock + stock || 0}
