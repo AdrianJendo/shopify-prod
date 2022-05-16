@@ -12,12 +12,17 @@ import {
 	TableRow,
 	TextField,
 	Typography,
+	InputLabel,
+	MenuItem,
+	FormControl,
+	Select,
 } from "@mui/material";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
 import styles from "../styles/Home.module.css";
 import axios from "axios";
+import { CITIES } from "constants";
 
 const rowsPerPage = 50;
 
@@ -35,6 +40,36 @@ export default function InventoryTable({ rows, setRows }) {
 		setRows(resp.data.items);
 	};
 
+	const handleChangePage = (_, newPage) => {
+		setPage(newPage);
+	};
+
+	const updateCell = ({ id, index, newVal }) => {
+		const newRows = rows.slice();
+		if (id === "item" || id === "city") {
+			newRows[index][id] = newVal;
+		} else if (id === "stock" && !isNaN(newVal)) {
+			newRows[index][id] = parseInt(newVal) || 0;
+		}
+		setRows(newRows);
+	};
+
+	const handleToggleEdit = async () => {
+		if (edit) {
+			const resp = await axios.put("/api/items", {
+				data: {
+					rows: rows.map((row) => ({
+						city: row.city,
+						item: row.item,
+						stock: row.stock,
+					})),
+				},
+			});
+			console.log(resp);
+		}
+		setEdit(!edit);
+	};
+
 	const columns = [
 		{ id: "item", label: "Item", align: "center" },
 		{ id: "city", label: "City", align: "center" },
@@ -45,7 +80,7 @@ export default function InventoryTable({ rows, setRows }) {
 
 	columns[columns.length - 1].label = (
 		<Tooltip title="Edit" placement="top">
-			<IconButton onClick={() => setEdit(!edit)}>
+			<IconButton onClick={() => handleToggleEdit()}>
 				{edit ? <LockOpenIcon /> : <LockIcon />}
 			</IconButton>
 		</Tooltip>
@@ -67,14 +102,6 @@ export default function InventoryTable({ rows, setRows }) {
 			);
 		}
 	}
-
-	const handleChangePage = (_, newPage) => {
-		setPage(newPage);
-	};
-
-	const updateName = (data) => {
-		console.log(data);
-	};
 
 	return (
 		<Paper sx={{ maxHeight: "100%", width: "50%", overflow: "hidden" }}>
@@ -125,22 +152,77 @@ export default function InventoryTable({ rows, setRows }) {
 													{edit &&
 													column.id !== "weather" &&
 													column.id !== "cancel" ? (
-														<TextField
-															className={
-																styles.tableTextField
-															}
-															value={value}
-															variant="standard"
-															onChange={(e) =>
-																updateName({
-																	newVal: e
-																		.target
-																		.value,
-																	id: column.id,
-																	value,
-																})
-															}
-														></TextField>
+														column.id === "city" ? (
+															<FormControl
+																sx={{
+																	width: "150px",
+																	margin: "0 20px",
+																	height: "30px",
+																}}
+															>
+																<InputLabel>
+																	City
+																</InputLabel>
+																<Select
+																	value={
+																		row.city
+																	}
+																	label="Age"
+																	onChange={(
+																		e
+																	) =>
+																		updateCell(
+																			{
+																				id: column.id,
+																				index,
+																				newVal: e
+																					.target
+																					.value,
+																			}
+																		)
+																	}
+																	sx={{
+																		height: "30px",
+																	}}
+																>
+																	{CITIES.map(
+																		(
+																			city
+																		) => (
+																			<MenuItem
+																				value={
+																					city
+																				}
+																				key={
+																					city
+																				}
+																			>
+																				{
+																					city
+																				}
+																			</MenuItem>
+																		)
+																	)}
+																</Select>
+															</FormControl>
+														) : (
+															<TextField
+																className={
+																	styles.tableTextField
+																}
+																value={value}
+																variant="standard"
+																onChange={(e) =>
+																	updateCell({
+																		id: column.id,
+																		index,
+																		newVal: e
+																			.target
+																			.value,
+																	})
+																}
+															></TextField>
+														)
 													) : (
 														<Typography>
 															{value}

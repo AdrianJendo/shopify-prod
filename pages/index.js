@@ -77,12 +77,8 @@ export default function Home() {
 						}}
 					/>
 					<FormControl sx={{ width: "200px", margin: "0 20px" }}>
-						<InputLabel id="demo-simple-select-label">
-							City
-						</InputLabel>
+						<InputLabel>City</InputLabel>
 						<Select
-							labelId="demo-simple-select-label"
-							id="demo-simple-select"
 							value={city}
 							label="Age"
 							onChange={(e) => setCity(e.target.value)}

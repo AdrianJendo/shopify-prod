@@ -145,6 +145,37 @@ export default async function handler(req, res) {
 			);
 		});
 	} else if (req.method === "PUT") {
+		const newRows = req.body.data.rows;
+		const updateQuery = `VALUES
+			${newRows
+				.map((row) => `('${row.item}', '${row.city}', ${row.stock})`)
+				.join(", ")}
+		`;
+
+		return new Promise((resolve) => {
+			db.exec(`DELETE FROM ${TABLE_NAME};`, (err) => {
+				if (err) {
+					res.status(500).json({
+						msg: "Error updating database",
+					});
+				} else {
+					db.exec(
+						`INSERT INTO ${TABLE_NAME}
+					${updateQuery}`,
+						async (err) => {
+							if (err) {
+								res.status(500).json({
+									msg: "Error updating database",
+								});
+							} else {
+								res.status(200).json({ status: 200 });
+							}
+						}
+					);
+				}
+				resolve();
+			});
+		});
 	} else if (req.method === "DELETE") {
 		return new Promise((resolve) => {
 			db.exec(
