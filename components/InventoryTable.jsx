@@ -54,14 +54,16 @@ export default function InventoryTable({ rows, setRows }) {
 	if (edit) {
 		for (let i = 0; i < rows.length; ++i) {
 			rows[i].cancel = (
-				<IconButton
-					onClick={() => deleteItem(rows[i])}
-					style={{
-						padding: "0px 8px",
-					}}
-				>
-					<DeleteForeverIcon />
-				</IconButton>
+				<Tooltip title="Remove Row" placement="top">
+					<IconButton
+						onClick={() => deleteItem(rows[i])}
+						style={{
+							padding: "0px 8px",
+						}}
+					>
+						<DeleteForeverIcon />
+					</IconButton>
+				</Tooltip>
 			);
 		}
 	}
