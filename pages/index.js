@@ -1,12 +1,21 @@
 import React, { useEffect, useState } from "react";
 import Head from "next/head";
 import styles from "styles/Home.module.css";
+import { CITIES } from "constants.js";
 import InventoryTable from "components/InventoryTable";
-import { TextField, Button } from "@mui/material";
+import {
+	TextField,
+	Button,
+	InputLabel,
+	MenuItem,
+	FormControl,
+	Select,
+} from "@mui/material";
 import axios from "axios";
 
 export default function Home() {
 	const [item, setItem] = useState("");
+	const [stock, setStock] = useState(0);
 	const [city, setCity] = useState("");
 	const [inventoryRows, setInventoryRows] = useState([]);
 
@@ -23,6 +32,7 @@ export default function Home() {
 			.post("/api/items", {
 				item,
 				city,
+				stock,
 			})
 			.then((successResp) => {
 				setInventoryRows(successResp.data.items);
@@ -56,12 +66,34 @@ export default function Home() {
 					/>
 					<TextField
 						className={styles.textField}
-						id="city"
-						label="City"
+						id="stock"
+						label="Stock"
 						variant="standard"
-						value={city}
-						onChange={(e) => setCity(e.target.value)}
+						value={stock}
+						onChange={(e) => {
+							if (!isNaN(e.target.value)) {
+								setStock(e.target.value);
+							}
+						}}
 					/>
+					<FormControl sx={{ width: "200px", margin: "0 20px" }}>
+						<InputLabel id="demo-simple-select-label">
+							City
+						</InputLabel>
+						<Select
+							labelId="demo-simple-select-label"
+							id="demo-simple-select"
+							value={city}
+							label="Age"
+							onChange={(e) => setCity(e.target.value)}
+						>
+							{CITIES.map((city) => (
+								<MenuItem value={city} key={city}>
+									{city}
+								</MenuItem>
+							))}
+						</Select>
+					</FormControl>
 					<Button variant="outlined" onClick={() => addToTable()}>
 						{" "}
 						Add to Table

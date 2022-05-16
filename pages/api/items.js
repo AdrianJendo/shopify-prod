@@ -1,5 +1,5 @@
 import sqlite3 from "sqlite3";
-import { DB_NAME, TABLE_NAME, CITIES } from "constants.js";
+import { DB_NAME, TABLE_NAME } from "constants.js";
 
 // Helper function for creating db
 const createDatabase = () => {
@@ -48,6 +48,9 @@ const queryInventories = async (res) => {
 	}
 };
 
+// Helper to query for inventory item
+const findItem = (item, city) => `item='${item}' AND city='${city}'`;
+
 // Connect to db
 const db = new sqlite3.Database(DB_NAME, sqlite3.OPEN_READWRITE, (err) => {
 	if (err && err.code == "SQLITE_CANTOPEN") {
@@ -60,45 +63,61 @@ const db = new sqlite3.Database(DB_NAME, sqlite3.OPEN_READWRITE, (err) => {
 });
 
 export default async function handler(req, res) {
+	const item = req.body.item;
+	const stock = parseInt(req.body.stock) || 0;
+	const city = req.body.city;
 	if (req.method === "POST") {
-		const insertValues = `('${req.body.item}', '${req.body.city}' , ${
-			req.body.stock || 0
-		})`;
 		return new Promise((resolve) => {
-			db.exec(
-				`INSERT INTO ${TABLE_NAME} (item, city, stock)
-						VALUES ${insertValues};
-					`,
-				async (err) => {
-					if (err) {
+			db.all(
+				`SELECT *
+				FROM ${TABLE_NAME}
+				WHERE ${findItem(item, city)}
+				LIMIT 1;`,
+				(queryErr, queryRows) => {
+					if (queryErr) {
 						res.status(500).json({
-							msg: "Error inserting into database",
+							msg: "Error querying database",
 						});
-						resolve();
 					} else {
-						await queryInventories(res);
+						console.log(queryRows, stock);
+						const query = queryRows.length
+							? `UPDATE ${TABLE_NAME}
+						SET stock = ${queryRows[0].stock + stock || 0}
+						WHERE ${findItem(item, city)}`
+							: `
+						INSERT INTO ${TABLE_NAME} (item, city, stock)
+										VALUES ('${item}', '${city}' , ${stock || 0});
+						`;
+						db.exec(query, async (err) => {
+							if (err) {
+								res.status(500).json({
+									msg: "Error inserting into database",
+								});
+							} else {
+								await queryInventories(res);
+							}
+						});
 					}
+					resolve();
 				}
 			);
 		});
 	} else if (req.method === "PUT") {
 	} else if (req.method === "DELETE") {
-		const deleteQuery = `item='${req.body.item}' AND city='${req.body.city}'`;
-		console.log(deleteQuery);
 		return new Promise((resolve) => {
 			db.exec(
 				`DELETE FROM ${TABLE_NAME}
-					WHERE ${deleteQuery};
+					WHERE ${findItem(req.body.item, req.body.city)};
 				`,
 				async (err) => {
 					if (err) {
 						res.status(500).json({
 							msg: "Error deleting from database",
 						});
-						resolve();
 					} else {
 						await queryInventories(res);
 					}
+					resolve();
 				}
 			);
 		});
