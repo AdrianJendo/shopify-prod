@@ -42,9 +42,6 @@ const queryInventories = async (res) => {
 					err = queryErr;
 				} else {
 					const cities = cityRows.map((row) => row.city);
-
-					console.log("C", cities);
-
 					const cityWeatherPromises = cityRows.map((row) =>
 						axios.get(
 							"https://api.openweathermap.org/data/2.5/weather",
