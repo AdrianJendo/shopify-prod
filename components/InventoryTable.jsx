@@ -37,6 +37,7 @@ export default function InventoryTable({ rows, setRows }) {
 	const columns = [
 		{ id: "item", label: "Item", align: "center" },
 		{ id: "city", label: "City", align: "center" },
+		{ id: "stock", label: "Stock", align: "center" },
 		{ id: "weather", label: "Weather", align: "center" },
 		{ id: "cancel", label: "", align: "right" },
 	];
@@ -105,7 +106,7 @@ export default function InventoryTable({ rows, setRows }) {
 										hover
 										role="checkbox"
 										tabIndex={-1}
-										key={row.id}
+										key={index}
 										sx={{
 											height: "70px",
 										}}

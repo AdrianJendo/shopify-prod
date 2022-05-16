@@ -18,12 +18,18 @@ export default function Home() {
 		getData();
 	}, []);
 
-	const addToTable = async () => {
-		const resp = await axios.post("/api/items", {
-			item,
-			city,
-		});
-		setInventoryRows(resp.data.items);
+	const addToTable = () => {
+		axios
+			.post("/api/items", {
+				item,
+				city,
+			})
+			.then((successResp) => {
+				setInventoryRows(successResp.data.items);
+			})
+			.catch((errResp) => {
+				alert(errResp.response.data.msg);
+			});
 	};
 
 	return (

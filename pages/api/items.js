@@ -25,7 +25,23 @@ const createDatabase = () => {
 	});
 };
 
-const inventoryItems = [];
+// Helper function for querying database
+const queryInventories = async () => {
+	let rows;
+	let err = undefined;
+	await new Promise((resolve) => {
+		db.all(`SELECT * FROM ${TABLE_NAME};`, function (queryErr, queryRows) {
+			if (queryErr) {
+				err = queryErr;
+			} else {
+				rows = queryRows;
+			}
+			resolve();
+		});
+	});
+	if (err) return { msg: "Error get inventory data" };
+	return rows;
+};
 
 // Connect to db
 const db = new sqlite3.Database(DB_NAME, sqlite3.OPEN_READWRITE, (err) => {
@@ -48,22 +64,21 @@ export default async function handler(req, res) {
 				`INSERT INTO ${TABLE_NAME} (item, city, stock)
 						VALUES ${insertValues};
 					`,
-				(err) => {
+				async (err) => {
 					if (err) {
-						res.status(500).json({ msg: err });
+						res.status(500).json({
+							msg: "Error inserting into database",
+						});
 						resolve();
 					} else {
-						db.all(
-							`SELECT * FROM ${TABLE_NAME};`,
-							function (err, rows) {
-								if (err) {
-									res.status(500).json({ msg: err });
-								} else {
-									res.status(200).json({ items: rows });
-								}
-								resolve();
-							}
-						);
+						const queryResp = await queryInventories();
+						if (queryResp.msg) {
+							res.status(500).json({
+								msg: queryResp.msg,
+							});
+						} else {
+							res.status(200).json({ items: queryResp });
+						}
 					}
 				}
 			);
@@ -75,7 +90,14 @@ export default async function handler(req, res) {
 		inventoryItems.splice(deleteIndex, 1);
 		res.status(200).json({ items: inventoryItems });
 	} else if (req.method === "GET") {
-		res.status(200).json({ items: inventoryItems });
+		const queryResp = await queryInventories();
+		if (queryResp.msg) {
+			res.status(500).json({
+				msg: queryResp.msg,
+			});
+		} else {
+			res.status(200).json({ items: queryResp });
+		}
 	} else {
 		res.status(500).json({ msg: "Method not found" });
 	}
