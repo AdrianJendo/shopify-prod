@@ -26,7 +26,7 @@ const createDatabase = () => {
 };
 
 // Helper function for querying database
-const queryInventories = async () => {
+const queryInventories = async (res) => {
 	let rows;
 	let err = undefined;
 	await new Promise((resolve) => {
@@ -39,8 +39,13 @@ const queryInventories = async () => {
 			resolve();
 		});
 	});
-	if (err) return { msg: "Error get inventory data" };
-	return rows;
+	if (err) {
+		res.status(500).json({
+			msg: "Error get inventory data",
+		});
+	} else {
+		res.status(200).json({ items: rows });
+	}
 };
 
 // Connect to db
@@ -71,33 +76,34 @@ export default async function handler(req, res) {
 						});
 						resolve();
 					} else {
-						const queryResp = await queryInventories();
-						if (queryResp.msg) {
-							res.status(500).json({
-								msg: queryResp.msg,
-							});
-						} else {
-							res.status(200).json({ items: queryResp });
-						}
+						await queryInventories(res);
 					}
 				}
 			);
 		});
 	} else if (req.method === "PUT") {
 	} else if (req.method === "DELETE") {
-		const deleteId = req.body.id;
-		const deleteIndex = inventoryItems.findIndex((e) => e.id === deleteId);
-		inventoryItems.splice(deleteIndex, 1);
-		res.status(200).json({ items: inventoryItems });
+		const deleteQuery = `item='${req.body.item}' AND city='${req.body.city}'`;
+		console.log(deleteQuery);
+		return new Promise((resolve) => {
+			db.exec(
+				`DELETE FROM ${TABLE_NAME}
+					WHERE ${deleteQuery};
+				`,
+				async (err) => {
+					if (err) {
+						res.status(500).json({
+							msg: "Error deleting from database",
+						});
+						resolve();
+					} else {
+						await queryInventories(res);
+					}
+				}
+			);
+		});
 	} else if (req.method === "GET") {
-		const queryResp = await queryInventories();
-		if (queryResp.msg) {
-			res.status(500).json({
-				msg: queryResp.msg,
-			});
-		} else {
-			res.status(200).json({ items: queryResp });
-		}
+		await queryInventories(res);
 	} else {
 		res.status(500).json({ msg: "Method not found" });
 	}

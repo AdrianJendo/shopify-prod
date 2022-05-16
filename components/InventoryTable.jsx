@@ -28,10 +28,11 @@ export default function InventoryTable({ rows, setRows }) {
 	const deleteItem = async (item) => {
 		const resp = await axios.delete("/api/items", {
 			data: {
-				id: item.id,
+				item: item.item,
+				city: item.city,
 			},
 		});
-		console.log(resp);
+		setRows(resp.data.items);
 	};
 
 	const columns = [
