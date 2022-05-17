@@ -11,6 +11,7 @@ import {
 	FormControl,
 	Select,
 } from "@mui/material";
+import * as XLSX from "xlsx";
 import axios from "axios";
 
 export default function Home() {
@@ -46,6 +47,36 @@ export default function Home() {
 			});
 	};
 
+	const exportToExcel = () => {
+		const wb = XLSX.utils.book_new();
+		const ws_name = "Inventory Data";
+
+		/* make worksheet */
+		// columns
+		const ws_data = [["Item", "City", "Stock", "Weather"]];
+
+		for (let i = 0; i < inventoryRows.length; ++i) {
+			ws_data.push([
+				inventoryRows[i].item,
+				inventoryRows[i].city,
+				inventoryRows[i].stock,
+				inventoryRows[i].weather,
+			]);
+		}
+
+		var ws = XLSX.utils.aoa_to_sheet(ws_data);
+		/* Add the worksheet to the workbook */
+		XLSX.utils.book_append_sheet(wb, ws, ws_name);
+
+		const today = new Date();
+		XLSX.writeFile(
+			wb,
+			`Inventory Data (${today.getFullYear()}-${
+				today.getMonth() + 1
+			}-${today.getDate()}).xlsx`
+		);
+	};
+
 	return (
 		<div className={styles.container}>
 			<Head>
@@ -59,6 +90,13 @@ export default function Home() {
 
 			<main className={styles.main}>
 				<h1 className={styles.title}>Inventory Tracker</h1>
+				<Button
+					variant="outlined"
+					onClick={() => exportToExcel()}
+					sx={{ marginTop: "20px" }}
+				>
+					Export data to excel
+				</Button>
 				<div className={styles.textContainer}>
 					<TextField
 						className={styles.textField}
@@ -95,7 +133,6 @@ export default function Home() {
 						</Select>
 					</FormControl>
 					<Button variant="outlined" onClick={() => addToTable()}>
-						{" "}
 						Add to Table
 					</Button>
 				</div>
