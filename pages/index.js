@@ -16,7 +16,7 @@ import axios from "axios";
 export default function Home() {
 	const [item, setItem] = useState("");
 	const [stock, setStock] = useState(0);
-	const [city, setCity] = useState("");
+	const [city, setCity] = useState(CITIES[0]);
 	const [inventoryRows, setInventoryRows] = useState([]);
 
 	useEffect(() => {
@@ -28,9 +28,13 @@ export default function Home() {
 	}, []);
 
 	const addToTable = () => {
+		if (item === "" || city === "") {
+			alert("Please Enter an Item");
+			return;
+		}
 		axios
 			.post("/api/items", {
-				item,
+				item: item.toLowerCase(),
 				city,
 				stock,
 			})

@@ -20,9 +20,9 @@ const createDatabase = () => {
 				PRIMARY KEY (item, city)
 			);
 			INSERT INTO ${TABLE_NAME} (item, city, stock)
-				VALUES ('Pants', 'Vancouver', 100),
-					('Clothes', 'Toronto', 200),
-					('Shoes', 'Montreal', 0);
+				VALUES ('pants', 'Vancouver', 100),
+					('shirts', 'Toronto', 200),
+					('shoes', 'Montreal', 0);
 				`
 		);
 	});
@@ -106,10 +106,10 @@ const db = new sqlite3.Database(DB_NAME, sqlite3.OPEN_READWRITE, (err) => {
 });
 
 export default async function handler(req, res) {
-	const item = req.body.item;
-	const stock = parseInt(req.body.stock) || 0;
-	const city = req.body.city;
 	if (req.method === "POST") {
+		const item = req.body.item;
+		const stock = parseInt(req.body.stock) || 0;
+		const city = req.body.city;
 		return new Promise((resolve) => {
 			db.all(
 				`SELECT *
@@ -145,36 +145,61 @@ export default async function handler(req, res) {
 			);
 		});
 	} else if (req.method === "PUT") {
-		const newRows = req.body.data.rows;
-		const updateQuery = `VALUES
-			${newRows
-				.map((row) => `('${row.item}', '${row.city}', ${row.stock})`)
-				.join(", ")}
-		`;
+		const newItem = req.body.data.newItem;
+		const oldItem = req.body.data.oldItem;
+		const newStock = req.body.data.newStock;
+		const newCity = req.body.data.newCity;
+		const oldCity = req.body.data.oldCity;
 
 		return new Promise((resolve) => {
-			db.exec(`DELETE FROM ${TABLE_NAME};`, (err) => {
-				if (err) {
-					res.status(500).json({
-						msg: "Error updating database",
-					});
-				} else {
-					db.exec(
-						`INSERT INTO ${TABLE_NAME}
-					${updateQuery}`,
-						async (err) => {
+			const whereClause =
+				newItem !== oldItem || newCity !== oldCity
+					? findItem(newItem, newCity)
+					: "1=0";
+
+			db.all(
+				`
+					SELECT *
+					FROM ${TABLE_NAME}
+					WHERE ${whereClause}
+					LIMIT 1;
+				`,
+				(queryErr, queryRows) => {
+					if (queryErr) {
+						res.status(500).json({
+							msg: "Error quering database",
+						});
+					} else {
+						console.log(queryRows);
+						const query = queryRows.length
+							? `
+							UPDATE ${TABLE_NAME}
+							SET stock = ${queryRows[0].stock + newStock}
+							WHERE ${whereClause};
+							DELETE FROM ${TABLE_NAME} WHERE ${findItem(oldItem, oldCity)};
+						`
+							: `
+							UPDATE ${TABLE_NAME}
+							SET 
+								item = '${newItem}',
+								stock = '${newStock}', 
+								city = '${newCity}'
+							WHERE ${findItem(oldItem, oldCity)};
+						`;
+						console.log(query);
+						db.exec(query, async (err) => {
 							if (err) {
 								res.status(500).json({
 									msg: "Error updating database",
 								});
 							} else {
-								res.status(200).json({ status: 200 });
+								await queryInventories(res);
 							}
-						}
-					);
+							resolve();
+						});
+					}
 				}
-				resolve();
-			});
+			);
 		});
 	} else if (req.method === "DELETE") {
 		return new Promise((resolve) => {

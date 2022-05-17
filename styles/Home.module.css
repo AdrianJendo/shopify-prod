@@ -102,6 +102,7 @@
 .textContainer {
 	display: inline-block;
 	padding: 45px;
+	justify-content: center;
 }
 
 .textField {
@@ -117,4 +118,9 @@
 
 .tableTextField {
 	width: 100px;
+}
+
+.buttonContainer {
+	display: flex;
+	justify-content: center;
 }

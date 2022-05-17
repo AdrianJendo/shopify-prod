@@ -1,4 +1,4 @@
-import * as React from "react";
+import React, { useState } from "react";
 import {
 	IconButton,
 	Tooltip,
@@ -16,10 +16,14 @@ import {
 	MenuItem,
 	FormControl,
 	Select,
+	Modal,
+	Box,
+	Button,
 } from "@mui/material";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import LockIcon from "@mui/icons-material/Lock";
 import LockOpenIcon from "@mui/icons-material/LockOpen";
+import SettingsIcon from "@mui/icons-material/Settings";
 import styles from "../styles/Home.module.css";
 import axios from "axios";
 import { CITIES } from "constants";
@@ -27,47 +31,50 @@ import { CITIES } from "constants";
 const rowsPerPage = 50;
 
 export default function InventoryTable({ rows, setRows }) {
-	const [page, setPage] = React.useState(0);
-	const [edit, setEdit] = React.useState(false);
+	const [page, setPage] = useState(0);
+	const [edit, setEdit] = useState(false);
+	const [modalValue, setModalValue] = useState(null);
 
 	const deleteItem = async (item) => {
 		const resp = await axios.delete("/api/items", {
 			data: {
-				item: item.item,
+				item: item.item.toLowerCase(),
 				city: item.city,
 			},
 		});
 		setRows(resp.data.items);
 	};
 
-	const handleChangePage = (_, newPage) => {
-		setPage(newPage);
+	const editItem = async (item) => {
+		setModalValue({
+			oldItem: item.item,
+			oldCity: item.city,
+			oldStock: item.stock,
+			newItem: item.item,
+			newCity: item.city,
+			newStock: item.stock,
+		});
 	};
 
-	const updateCell = ({ id, index, newVal }) => {
-		const newRows = rows.slice();
-		if (id === "item" || id === "city") {
-			newRows[index][id] = newVal;
-		} else if (id === "stock" && !isNaN(newVal)) {
-			newRows[index][id] = parseInt(newVal) || 0;
-		}
-		setRows(newRows);
-	};
-
-	const handleToggleEdit = async () => {
-		if (edit) {
+	const updateRow = async () => {
+		if (
+			modalValue.newItem !== modalValue.oldItem ||
+			modalValue.newStock !== modalValue.oldStock ||
+			modalValue.newCity !== modalValue.oldCity
+		) {
 			const resp = await axios.put("/api/items", {
 				data: {
-					rows: rows.map((row) => ({
-						city: row.city,
-						item: row.item,
-						stock: row.stock,
-					})),
+					newItem: modalValue.newItem,
+					oldItem: modalValue.oldItem,
+					newStock: modalValue.newStock,
+					newCity: modalValue.newCity,
+					oldCity: modalValue.oldCity,
 				},
 			});
-			console.log(resp);
+			console.log(resp.data);
+			setRows(resp.data.items);
+			setModalValue(null);
 		}
-		setEdit(!edit);
 	};
 
 	const columns = [
@@ -75,33 +82,21 @@ export default function InventoryTable({ rows, setRows }) {
 		{ id: "city", label: "City", align: "center" },
 		{ id: "stock", label: "Stock", align: "center" },
 		{ id: "weather", label: "Weather", align: "center" },
-		{ id: "cancel", label: "", align: "right" },
+		{ id: "editRow", label: "", align: "right" },
+		{ id: "deleteRow", label: "", align: "right" },
 	];
 
 	columns[columns.length - 1].label = (
 		<Tooltip title="Edit" placement="top">
-			<IconButton onClick={() => handleToggleEdit()}>
+			<IconButton onClick={() => setEdit(!edit)}>
 				{edit ? <LockOpenIcon /> : <LockIcon />}
 			</IconButton>
 		</Tooltip>
 	);
 
-	if (edit) {
-		for (let i = 0; i < rows.length; ++i) {
-			rows[i].cancel = (
-				<Tooltip title="Remove Row" placement="top">
-					<IconButton
-						onClick={() => deleteItem(rows[i])}
-						style={{
-							padding: "0px 8px",
-						}}
-					>
-						<DeleteForeverIcon />
-					</IconButton>
-				</Tooltip>
-			);
-		}
-	}
+	const handleChangePage = (_, newPage) => {
+		setPage(newPage);
+	};
 
 	return (
 		<Paper sx={{ maxHeight: "100%", width: "50%", overflow: "hidden" }}>
@@ -150,78 +145,48 @@ export default function InventoryTable({ rows, setRows }) {
 													className={styles.tableCell}
 												>
 													{edit &&
-													column.id !== "weather" &&
-													column.id !== "cancel" ? (
-														column.id === "city" ? (
-															<FormControl
-																sx={{
-																	width: "150px",
-																	margin: "0 20px",
-																	height: "30px",
-																}}
+													(column.id === "editRow" ||
+														column.id ===
+															"deleteRow") ? (
+														column.id ===
+														"editRow" ? (
+															<Tooltip
+																title="Edit Row"
+																placement="top"
 															>
-																<InputLabel>
-																	City
-																</InputLabel>
-																<Select
-																	value={
-																		row.city
-																	}
-																	label="Age"
-																	onChange={(
-																		e
-																	) =>
-																		updateCell(
-																			{
-																				id: column.id,
-																				index,
-																				newVal: e
-																					.target
-																					.value,
-																			}
+																<IconButton
+																	onClick={() =>
+																		editItem(
+																			row
 																		)
 																	}
-																	sx={{
-																		height: "30px",
+																	style={{
+																		padding:
+																			"0px 8px",
 																	}}
 																>
-																	{CITIES.map(
-																		(
-																			city
-																		) => (
-																			<MenuItem
-																				value={
-																					city
-																				}
-																				key={
-																					city
-																				}
-																			>
-																				{
-																					city
-																				}
-																			</MenuItem>
-																		)
-																	)}
-																</Select>
-															</FormControl>
+																	<SettingsIcon />
+																</IconButton>
+															</Tooltip>
 														) : (
-															<TextField
-																className={
-																	styles.tableTextField
-																}
-																value={value}
-																variant="standard"
-																onChange={(e) =>
-																	updateCell({
-																		id: column.id,
-																		index,
-																		newVal: e
-																			.target
-																			.value,
-																	})
-																}
-															></TextField>
+															<Tooltip
+																title="Remove Row"
+																placement="top"
+															>
+																<IconButton
+																	onClick={() =>
+																		deleteItem(
+																			row
+																		)
+																	}
+																	style={{
+																		padding:
+																			"0px 8px",
+																	}}
+																>
+																	<DeleteForeverIcon />
+																</IconButton>
+															</Tooltip>
 														)
 													) : (
 														<Typography>
@@ -237,6 +202,98 @@ export default function InventoryTable({ rows, setRows }) {
 					</TableBody>
 				</Table>
 			</TableContainer>
+
+			<Modal open={modalValue !== null}>
+				<Box
+					sx={{
+						position: "absolute",
+						top: "50%",
+						left: "50%",
+						transform: "translate(-50%, -50%)",
+						bgcolor: "background.paper",
+						border: "2px solid #000",
+						boxShadow: 24,
+						p: 4,
+					}}
+				>
+					<Typography
+						variant="h6"
+						component="h2"
+						className={styles.buttonContainer}
+					>
+						Edit Row
+					</Typography>
+					{modalValue !== null && (
+						<div className={styles.textContainer}>
+							<TextField
+								className={styles.textField}
+								id="item"
+								label="Item"
+								variant="standard"
+								value={modalValue.newItem}
+								onChange={(e) =>
+									setModalValue({
+										...modalValue,
+										newItem: e.target.value.toLowerCase(),
+									})
+								}
+							/>
+							<TextField
+								className={styles.textField}
+								id="stock"
+								label="Stock"
+								variant="standard"
+								value={modalValue.newStock}
+								onChange={(e) => {
+									if (!isNaN(e.target.value)) {
+										setModalValue({
+											...modalValue,
+
+											newStock: e.target.value || 0,
+										});
+									}
+								}}
+							/>
+							<FormControl
+								sx={{ width: "200px", margin: "0 20px" }}
+							>
+								<InputLabel>City</InputLabel>
+								<Select
+									value={modalValue.newCity}
+									label="Age"
+									onChange={(e) =>
+										setModalValue({
+											...modalValue,
+											newCity: e.target.value,
+										})
+									}
+								>
+									{CITIES.map((city) => (
+										<MenuItem value={city} key={city}>
+											{city}
+										</MenuItem>
+									))}
+								</Select>
+							</FormControl>
+						</div>
+					)}
+					<div className={styles.buttonContainer}>
+						<Button
+							onClick={() => updateRow()}
+							sx={{ padding: "20px" }}
+						>
+							Confirm changes
+						</Button>
+						<Button
+							onClick={() => setModalValue(null)}
+							sx={{ padding: "20px" }}
+						>
+							Cancel changes
+						</Button>
+					</div>
+				</Box>
+			</Modal>
+
 			{rows.length > rowsPerPage && (
 				<TablePagination
 					sx={{ height: "15%" }}
