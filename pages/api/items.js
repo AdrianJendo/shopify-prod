@@ -41,7 +41,6 @@ const queryInventories = async (res) => {
 				if (queryErr) {
 					err = queryErr;
 				} else {
-					const cities = cityRows.map((row) => row.city);
 					const cityWeatherPromises = cityRows.map((row) =>
 						axios.get(
 							"https://api.openweathermap.org/data/2.5/weather",
@@ -170,7 +169,6 @@ export default async function handler(req, res) {
 							msg: "Error quering database",
 						});
 					} else {
-						console.log(queryRows);
 						const query = queryRows.length
 							? `
 							UPDATE ${TABLE_NAME}
@@ -186,7 +184,6 @@ export default async function handler(req, res) {
 								city = '${newCity}'
 							WHERE ${findItem(oldItem, oldCity)};
 						`;
-						console.log(query);
 						db.exec(query, async (err) => {
 							if (err) {
 								res.status(500).json({
