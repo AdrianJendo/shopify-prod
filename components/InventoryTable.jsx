@@ -71,7 +71,6 @@ export default function InventoryTable({ rows, setRows }) {
 					oldCity: modalValue.oldCity,
 				},
 			});
-			console.log(resp.data);
 			setRows(resp.data.items);
 			setModalValue(null);
 		}
