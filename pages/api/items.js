@@ -146,7 +146,7 @@ export default async function handler(req, res) {
 	} else if (req.method === "PUT") {
 		const newItem = req.body.data.newItem;
 		const oldItem = req.body.data.oldItem;
-		const newStock = req.body.data.newStock;
+		const newStock = parseInt(req.body.data.newStock);
 		const newCity = req.body.data.newCity;
 		const oldCity = req.body.data.oldCity;
 

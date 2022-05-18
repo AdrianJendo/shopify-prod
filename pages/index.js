@@ -35,7 +35,7 @@ export default function Home() {
 		}
 		axios
 			.post("/api/items", {
-				item: item.toLowerCase(),
+				item: item,
 				city,
 				stock,
 			})
@@ -104,7 +104,7 @@ export default function Home() {
 						label="Item"
 						variant="standard"
 						value={item}
-						onChange={(e) => setItem(e.target.value)}
+						onChange={(e) => setItem(e.target.value.toLowerCase())}
 					/>
 					<TextField
 						className={styles.textField}
